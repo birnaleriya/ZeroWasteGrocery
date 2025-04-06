@@ -1,0 +1,50 @@
+/* Ensure the home section covers the full viewport */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&display=swap');
+
+.home-container {
+    height: 100vh;
+    width: 100vw;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+}
+
+/* Styling for heading */
+.home-container h2 {
+    font-family: 'Dancing Script', cursive;
+    font-size: 4.5rem;
+    margin: 0;
+    padding: 0;
+    color: white;
+    font-weight: bolder;
+    animation: fadeIn 1s forwards;
+}
+
+/* Styling for sub-heading */
+.home-container h3 {
+    font-family: 'Dancing Script', cursive;
+    font-size: 2.5rem;
+    margin: 0;
+    padding: 0;
+    color: white;
+    font-weight: bolder;
+    animation: fadeIn 1s forwards;
+}
+
+/* Keyframes for animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
