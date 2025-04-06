@@ -17,7 +17,7 @@ const Navbar = () => {
                 <li><Link to="/"><FontAwesomeIcon icon={faHome} /></Link></li>
                 <li><Link to="/about-us">About Us</Link></li>
                 <li><Link to="/smart-grocery">Smart Grocery</Link></li>
-                <li><Link to="/meal-plan]">Meal Plan</Link></li>
+                <li><Link to="/meal-plan">Meal Plan</Link></li>
                 <li><Link to="/zero-waste]">Zero Waste</Link></li>
             </ul>
 

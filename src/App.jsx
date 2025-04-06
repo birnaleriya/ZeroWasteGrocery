@@ -5,10 +5,11 @@ import Home from './Frontend/Home';
 import Navbar from './Frontend/Navbar';
 import AboutUs from './Frontend/AboutUs';
 import SmartGrocery from './Frontend/SmartGrocery';
-import MealPlan from './Frontend/MealPlan';
+import MealPlanForm from './Frontend/mealPlanForm';
 import ZeroWaste from './Frontend/ZeroWaste';
 import Login from './Frontend/Login';
 import Register from './Frontend/Register';
+
 const App = () => {
   return (
     <Router>
@@ -17,7 +18,7 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="about-us" element={<AboutUs />} />
         <Route path="smart-grocery" element={<SmartGrocery />} />
-        <Route path="meal-plan" element={<MealPlan />} />
+        <Route path="meal-plan" element={<MealPlanForm />} />
         <Route path="zero-waste" element={<ZeroWaste />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
