@@ -1,4 +1,4 @@
-import bgImage from "../assets/smart_grocery.jpg";
+import bgImage from "../assets/smart_grocery.png";
 
 const SmartGrocery = () => {
     return (
