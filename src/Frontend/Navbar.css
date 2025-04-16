@@ -55,33 +55,23 @@ html {
     /* Add padding to avoid sticking to the edge */
 }
 
-
-.login-icon {
-    font-size: 24px;
-    color: white;
-    cursor: pointer;
-    transition: color 0.3s ease;
-}
-
-.login-icon:hover {
-    color: #d43f8d;
-    /* Change color on hover */
-}
-
 .smart-grocery {
     height: 100vh;
     width: 100vw;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
     position: relative;
-    padding: 2rem;
 }
 
 .smart-grocery-title {
     font-size: 3rem;
     font-weight: bold;
-    color: white;
+    color: rgb(0, 0, 0);
     position: absolute;
     top: 1rem;
     left: 2rem;
@@ -98,12 +88,12 @@ html {
 
 .smart-grocery-description {
     font-size: 1.8rem;
-    color: white;
+    color: rgb(0, 0, 0);
     margin-bottom: 2rem;
 }
 
 .fieldset {
-    border: 2px solid white;
+    border: 2px solid rgb(0, 0, 0);
     padding: 1rem 2rem;
     border-radius: 10px;
     background-color: rgba(255, 255, 255, 0.8);
@@ -127,9 +117,66 @@ html {
 }
 
 
+/* Position the dropdown menu */
+.dropdown-menu {
+    position: absolute;
+    top: 60px;
+    right: 0;
+    background-color: #1f2937;
+    /* Tailwind's gray-800 */
+    color: white;
+    padding: 16px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    width: 250px;
+}
+
+.dropdown-menu p {
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.logout-button {
+    margin-top: 10px;
+    background-color: #ef4444;
+    /* red-500 */
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    font-weight: bold;
+}
+
+.logout-button:hover {
+    background-color: #dc2626;
+    /* red-600 */
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: white;
+}
+
+.login-icon {
+    font-size: 24px;
+    color: white;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.login-icon:hover {
+    color: #d43f8d;
+    /* Change color on hover */
+}
+
 .login-container {
     width: 100vw;
-    height: 100vh;
+    height: 150vh;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -145,7 +192,7 @@ html {
 
 .register-container {
     width: 100vw;
-    height: 100vh;
+    height: 200vh;
     display: flex;
     flex-direction: column;
     align-items: center;

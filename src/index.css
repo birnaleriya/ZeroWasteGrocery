@@ -1,3 +1,20 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+.pdf-page {
+    page-break-before: always;
+    break-before: page;
+  }
+  
+  .break-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  @media print {
+    .print-page {
+      page-break-after: always;
+      break-after: page;
+      break-inside: avoid;
+    }
+  }
+  

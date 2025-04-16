@@ -13,6 +13,11 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain_core.output_parsers import StrOutputParser
 
+
+
+
+
+import traceback
 # Load environment variables from .env file
 load_dotenv()
 
@@ -23,6 +28,7 @@ CORS(app)  # Enable CORS for all routes
 # Check for API key
 if "GOOGLE_API_KEY" not in os.environ:
     raise ValueError("GOOGLE_API_KEY not found in environment variables. Please add it to your .env file.")
+
 
 # Initialize Gemini model
 gemini = GoogleGenerativeAI(model="gemini-1.5-pro")
@@ -42,32 +48,30 @@ prompt_template_items = PromptTemplate(
     """
 )
 
-# Create prompt templates
-# prompt_template_meal = PromptTemplate(
-#     input_variables=["age", "weight", "height", "gender", "diet_type", "allergies", "health_conditions", "health_goal", "cuisine", "item_list", "days_to_expiry"],
-#     template="""
-#     1. You are an AI nutritionist. Generate a 7-day meal plan (4 meals per day) based on the following details:
-#     - Age: {age}
-#     - Weight: {weight} kg
-#     - Height: {height} cm
-#     - Gender: {gender}
-#     - Dietary Preferences: {diet_type}
-#     - Allergies: {allergies}
-#     - Health Conditions: {health_conditions}
-#     - Health Goal: {health_goal}
-#     - Preferred Cuisine: {cuisine}
-#     - Available Ingredients: {item_list}
-#     - Time Until Expiry (Days): {days_to_expiry}
-    
-#     2. The plan should be optimized to minimize food waste by prioritizing items that expire soon.
-#     3. Strictly do not repeat the exact same meals on consecutive days.
-#     4. Double check your responses before finalizing the meal plan.
-#     5. Output the plan in JSON format with days (monday, tuesday, wednesday, etc.) as keys and each day containing 4 meals (breakfast, lunch, snacks, dinner).
-#     6. Make sure that the response does not contain any preamble. Return JSON text only, no markdown formatting, no triple backticks, no explanations.
-#     """
-# )
+
 # update prompt_template_meal: ❗
 
+# prompt_template_waste_analysis = PromptTemplate(
+#     input_variables=["wasted_items"],
+#     template="""
+# You are a smart grocery advisor.
+
+# The following grocery items were **wasted** by the user over the last week: {wasted_items}
+
+# Suggest simple, actionable, and weekly-purchasing changes to reduce this waste in the future. For each item, suggest:
+# - A frequency to buy (e.g., "Buy only 1 cucumber per week")
+# - Storage or usage tips
+# - Optional recipe suggestions to use it before expiry
+
+# Make sure the suggestions are practical and user-friendly.
+# Return the output as a list of suggestions like:
+# [
+#   "Buy only 2 cucumbers per week. Tip: Use them in sandwiches. Store in paper towel inside fridge.",
+#   ...
+# ]
+# Avoid unnecessary explanations. Do not use markdown or extra symbols.
+# """
+# )
 
 # prompt_template_meal = PromptTemplate(
 #     input_variables=["age", "weight", "height", "gender", "diet_type", "allergies", "health_conditions", "health_goal", "cuisine", "item_list", "days_to_expiry"],
@@ -84,14 +88,18 @@ prompt_template_items = PromptTemplate(
 #     - Preferred Cuisine: {cuisine}
 #     - Available Ingredients: {item_list}
 #     - Time Until Expiry (Days): {days_to_expiry}
-    
+
 #     2. The plan should be optimized to minimize food waste by prioritizing items that expire soon.
 #     3. Strictly do not repeat the exact same meals on consecutive days.
-#     4. Double check your responses before finalizing the meal plan.
-#     5. Output the plan in JSON format with days (monday, tuesday, wednesday, etc.) as keys and each day containing 4 meals (breakfast, lunch, snacks, dinner).
-#     6. Make sure that the response does not contain any preamble. Return JSON text only, no markdown formatting, no triple backticks, no explanations.
-#     """ 
+#     4. Double-check your responses before finalizing the meal plan.
+#     5. For each meal (breakfast, lunch, snacks, dinner), provide both the recipe name and the **detailed step-by-step cooking instructions**.
+#     6. Output the plan in JSON format with days (monday, tuesday, wednesday, etc.) as keys and each day containing 4 meals (breakfast, lunch, snacks, dinner). For each meal, include:
+#        - "recipe_name": (name of the dish)
+#        - "instructions": (step-by-step preparation instructions)
+#     7. Make sure that the response does not contain any preamble. Return JSON text only, no markdown formatting, no triple backticks, no explanations.
+#     """
 # )
+
 prompt_template_meal = PromptTemplate(
     input_variables=["age", "weight", "height", "gender", "diet_type", "allergies", "health_conditions", "health_goal", "cuisine", "item_list", "days_to_expiry"],
     template="""
@@ -111,14 +119,15 @@ prompt_template_meal = PromptTemplate(
     2. The plan should be optimized to minimize food waste by prioritizing items that expire soon.
     3. Strictly do not repeat the exact same meals on consecutive days.
     4. Double-check your responses before finalizing the meal plan.
-    5. For each meal (breakfast, lunch, snacks, dinner), provide both the recipe name and the **detailed step-by-step cooking instructions**.
+    5. For each meal (breakfast, lunch, snacks, dinner), provide both the recipe name and the detailed step-by-step cooking instructions.
     6. Output the plan in JSON format with days (monday, tuesday, wednesday, etc.) as keys and each day containing 4 meals (breakfast, lunch, snacks, dinner). For each meal, include:
        - "recipe_name": (name of the dish)
-       - "instructions": (step-by-step preparation instructions)
+       - "instructions": (step-by-step preparation instructions in detail)
+       - "how_it_helps": (how the meal helps my dietary preferences, health conditions and goals)
+       - "calories": (total calories along with how many calories each item contributes per serve)
     7. Make sure that the response does not contain any preamble. Return JSON text only, no markdown formatting, no triple backticks, no explanations.
     """
 )
-
 prompt_template_recipe = PromptTemplate(
     input_variables=["meal", "item_list", "days_to_expiry"],
     template="""
@@ -131,11 +140,46 @@ prompt_template_recipe = PromptTemplate(
     4. Output the plan in JSON format with "recipes" array containing recipe_name, ingredients (item, quantity, note) and instructions, all for each recipe.
     5. Make sure that the response does not contain any preamble. Return JSON text only.
     """ )
+prompt_template_waste_analysis = PromptTemplate(
+    input_variables=["wasted_items"],
+    template="""
+You are a smart grocery assistant.
+
+The following grocery items were wasted last week: {wasted_items}
+
+For each item, provide the following details:
+
+- **Smart shopping tips**: Provide advice on how to purchase the item better in the future, considering its product life, spoilage rate, and typical usage. (e.g., "Buy smaller packs of cucumbers as they last only a few days after purchase" or "Opt for fresh tomatoes that are used quickly, as they spoil within a week.")
+
+- **Storage tips**: Offer detailed, item-specific storage guidance to help extend the item's shelf life and prevent spoilage. (e.g., "Wrap cucumbers in damp paper towels and store them in the fridge" or "Store tomatoes at room temperature for best flavor.")
+
+- **Creative recipes**: Suggest practical and creative ways to use the item before it spoils, including recipes or meal ideas. For example, how to incorporate stale bread or overripe bananas into meals.
+
+- **Extended shelf-life advice**: Provide alternative methods to keep the item fresh for a longer time (e.g., freezing, pickling, or using other preservation techniques).
+
+Respond with a list like:
+[
+  "For cucumbers: \nSmart shopping tip: Cucumbers have a short shelf life, typically lasting only 3-5 days in the fridge. Buying in smaller quantities will prevent them from spoiling too quickly. \nStorage tip: Wrap cucumbers in damp paper towels and keep them in the fridge’s crisper drawer to maintain moisture. \nCreative recipe: Use cucumbers in a cucumber yogurt dip or make a refreshing cucumber salad. \nExtended shelf-life advice: Pickle cucumbers for long-term storage and use later in sandwiches or as a snack.",
+  
+  "For tomatoes: \nSmart shopping tip: Tomatoes ripen quickly and can spoil within a week. Buy only as many as you can use in 3-4 days, especially if you're using them fresh. \nStorage tip: Store tomatoes at room temperature away from sunlight for best flavor and to avoid spoilage. \nCreative recipe: Use overripe tomatoes in a fresh tomato sauce, tomato soup, or blend into salsa. \nExtended shelf-life advice: Freeze chopped tomatoes to use in soups or stews later.",
+  
+  "For bread: \nSmart shopping tip: Bread can go stale or moldy within 5-7 days, so it's better to buy smaller loaves or what you can consume in a few days. \nStorage tip: Store bread in a bread box or paper bag to keep it fresh for up to 4 days. \nCreative recipe: Use stale bread to make croutons, bread pudding, or French toast. \nExtended shelf-life advice: Freeze slices and toast as needed, reducing waste.",
+  
+  "For bananas: \nSmart shopping tip: Bananas ripen quickly, often within 3-5 days, so buying them when they're slightly underripe can help them last longer. \nStorage tip: Keep bananas at room temperature, away from other fruits, to avoid quick ripening. \nCreative recipe: Use overripe bananas in smoothies, banana bread, or freeze them for banana ice cream. \nExtended shelf-life advice: Freeze ripe bananas to use in smoothies or as a dessert ingredient later.",
+  
+  "For lettuce: \nSmart shopping tip: Lettuce can wilt and spoil in just a few days, so buy only what you will use within a few days of purchase. \nStorage tip: Store lettuce in a salad spinner or airtight container with a paper towel to absorb moisture and extend freshness. \nCreative recipe: Use lettuce in salads, wraps, or sauté it as a side dish with garlic and olive oil. \nExtended shelf-life advice: Refrigerate in an airtight container with a damp towel to extend freshness."
+]
+
+Make the suggestions practical, actionable, and easy to follow. Avoid markdown, bullet points, or unnecessary explanations.
+"""
+)
+
 
 # Create chains
 chain_items = prompt_template_items | gemini | StrOutputParser()
 chain_meal = prompt_template_meal | gemini | StrOutputParser()
 chain_recipe = prompt_template_recipe | gemini | StrOutputParser()
+chain_waste_analysis = prompt_template_waste_analysis | gemini | StrOutputParser()
 
 @app.route("/extract-items", methods=["POST"])
 def extract_items():
@@ -220,7 +264,269 @@ def generate_recipe():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
         
-# @
+ # Add this at the top
+
+# @app.route("/analyze-waste", methods=["POST"])
+# def analyze_waste():
+#     try:
+#         data = request.json
+#         wasted_items = data.get("wasted_items", [])
+
+#         if not wasted_items:
+#             return jsonify({"error": "No wasted items provided."}), 400
+
+#         item_str = ", ".join(wasted_items)
+#         result = chain_waste_analysis.invoke({"wasted_items": item_str})
+
+#         print("🧠 Raw AI Output:", result)
+
+#         try:
+#             # Attempt to parse as list
+#             suggestions = ast.literal_eval(result)
+#             if not isinstance(suggestions, list):
+#                 raise ValueError("Output is not a list")
+#         except Exception as eval_err:
+#             print("⚠️ literal_eval failed:", eval_err)
+#             print("Fallback to splitting string output by lines.")
+#             suggestions = [line.strip("- ").strip() for line in result.strip().split("\n") if line.strip()]
+
+#         return jsonify({"suggestions": suggestions})
+
+#     except Exception as e:
+#         print("🔥 Exception in /analyze-waste route:", e)
+#         traceback.print_exc()
+#         return jsonify({"error": str(e)}), 500
+# Create a Blueprint for waste analysis routes
+
+prompt_template_voice = PromptTemplate(
+    input_variables=["user_query"],
+    template="""
+You are Zero, a smart kitchen and zero-waste assistant.
+
+The user asked: "{user_query}"
+
+Respond in a friendly tone with plain text. 
+Do not use any special characters, markdown (*, **, #, etc.), emojis, or HTML. 
+Keep the formatting natural for reading aloud. 
+Structure the response in short, clear sentences. Avoid long paragraphs.
+Start the answer directly without greetings.
+
+Example: 
+Instead of "Here's a recipe: *Banana Bread*...", just say "You can make banana bread. Mash bananas with flour..."
+
+Now respond to the user's question.
+"""
+)
+
+chain_voice = prompt_template_voice| gemini | StrOutputParser()
+@app.route('/gemini-voice', methods=['POST'])
+def handle_voice_query():
+    try:
+        data = request.get_json()
+        user_query = data.get("prompt", "")
+
+        if not user_query:
+            return jsonify({"error": "Missing prompt"}), 400
+
+        # Run the Gemini chain
+        result = chain_voice.invoke({"user_query": user_query})
+        return jsonify({"reply": result})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# @app.route('/analyze_waste', methods=['POST'])
+# def analyze_waste():
+#     try:
+#         data = request.json
+#         wasted_items = data.get('wasted_items', [])
+        
+#         if not wasted_items:
+#             return jsonify({"error": "No wasted items provided"}), 400
+            
+#         # Join the wasted items into a comma-separated string
+#         wasted_items_str = ", ".join(wasted_items)
+        
+#         # Initialize Gemini model
+        
+#         # Create the prompt template
+#         prompt_template_waste_analysis = PromptTemplate(
+#             input_variables=["wasted_items"],
+#             template="""
+# You are a smart grocery assistant.
+
+# The following grocery items were wasted last week: {wasted_items}
+
+# For each item, provide the following details:
+
+# - **Smart shopping tips**: Provide advice on how to purchase the item better in the future, considering its product life, spoilage rate, and typical usage. (e.g., "Buy smaller packs of cucumbers as they last only a few days after purchase" or "Opt for fresh tomatoes that are used quickly, as they spoil within a week.")
+
+# - **Storage tips**: Offer detailed, item-specific storage guidance to help extend the item's shelf life and prevent spoilage. (e.g., "Wrap cucumbers in damp paper towels and store them in the fridge" or "Store tomatoes at room temperature for best flavor.")
+
+# - **Creative recipes**: Suggest practical and creative ways to use the item before it spoils, including recipes or meal ideas. For example, how to incorporate stale bread or overripe bananas into meals.
+
+# - **Extended shelf-life advice**: Provide alternative methods to keep the item fresh for a longer time (e.g., freezing, pickling, or using other preservation techniques).
+
+# Respond with a list like:
+# [
+#   "For cucumbers: \nSmart shopping tip: Cucumbers have a short shelf life, typically lasting only 3-5 days in the fridge. Buying in smaller quantities will prevent them from spoiling too quickly. \nStorage tip: Wrap cucumbers in damp paper towels and keep them in the fridge’s crisper drawer to maintain moisture. \nCreative recipe: Use cucumbers in a cucumber yogurt dip or make a refreshing cucumber salad. \nExtended shelf-life advice: Pickle cucumbers for long-term storage and use later in sandwiches or as a snack.",
+  
+#   "For tomatoes: \nSmart shopping tip: Tomatoes ripen quickly and can spoil within a week. Buy only as many as you can use in 3-4 days, especially if you're using them fresh. \nStorage tip: Store tomatoes at room temperature away from sunlight for best flavor and to avoid spoilage. \nCreative recipe: Use overripe tomatoes in a fresh tomato sauce, tomato soup, or blend into salsa. \nExtended shelf-life advice: Freeze chopped tomatoes to use in soups or stews later.",
+  
+#   "For bread: \nSmart shopping tip: Bread can go stale or moldy within 5-7 days, so it's better to buy smaller loaves or what you can consume in a few days. \nStorage tip: Store bread in a bread box or paper bag to keep it fresh for up to 4 days. \nCreative recipe: Use stale bread to make croutons, bread pudding, or French toast. \nExtended shelf-life advice: Freeze slices and toast as needed, reducing waste.",
+  
+#   "For bananas: \nSmart shopping tip: Bananas ripen quickly, often within 3-5 days, so buying them when they're slightly underripe can help them last longer. \nStorage tip: Keep bananas at room temperature, away from other fruits, to avoid quick ripening. \nCreative recipe: Use overripe bananas in smoothies, banana bread, or freeze them for banana ice cream. \nExtended shelf-life advice: Freeze ripe bananas to use in smoothies or as a dessert ingredient later.",
+  
+#   "For lettuce: \nSmart shopping tip: Lettuce can wilt and spoil in just a few days, so buy only what you will use within a few days of purchase. \nStorage tip: Store lettuce in a salad spinner or airtight container with a paper towel to absorb moisture and extend freshness. \nCreative recipe: Use lettuce in salads, wraps, or sauté it as a side dish with garlic and olive oil. \nExtended shelf-life advice: Refrigerate in an airtight container with a damp towel to extend freshness."
+# ]
+
+# Make the suggestions practical, actionable, and easy to follow. Avoid markdown, bullet points, or unnecessary explanations.
+# """
+#         )
+        
+#         # Create and run the chain
+#         chain_waste_analysis = prompt_template_waste_analysis | gemini | StrOutputParser()
+#         response = chain_waste_analysis.invoke({"wasted_items": wasted_items_str})
+        
+#         # Parse the response into a list (assuming response is properly formatted)
+#         suggestions = [item.strip() for item in response.strip('[]').split('",') if item.strip()]
+#         suggestions = [suggestion.strip(' "') for suggestion in suggestions]
+        
+#         return jsonify({
+#             "suggestions": suggestions,
+#             "raw_response": response
+#         })
+    
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
+@app.route('/analyze_waste', methods=['POST'])
+def analyze_waste():
+    try:
+        data = request.json
+        wasted_items = data.get('wasted_items', [])
+
+        if not wasted_items:
+            return jsonify({"error": "No wasted items provided"}), 400
+
+        wasted_items_str = ", ".join(wasted_items)
+
+        # Updated prompt template for JSON response
+        prompt_template_waste_analysis = PromptTemplate(
+            input_variables=["wasted_items"],
+            template="""
+You are a smart grocery assistant.
+
+The following grocery items were wasted last week: {wasted_items}
+
+For each item, respond with a JSON object containing the following keys:
+- "item"
+- "smart_shopping_tip"
+- "storage_tip"
+- "creative_recipe"
+- "extended_shelf_life_advice"
+
+Return a JSON array of such objects.
+
+Example format:
+[
+  {{
+    "item": "cucumbers",
+    "smart_shopping_tip": "Buy smaller packs of cucumbers as they last only a few days after purchase.",
+    "storage_tip": "Wrap cucumbers in damp paper towels and store them in the fridge’s crisper drawer.",
+    "creative_recipe": "Make a cucumber yogurt dip or refreshing cucumber salad.",
+    "extended_shelf_life_advice": "Pickle cucumbers to store them for longer."
+  }}
+]
+
+Respond with valid JSON only. Do not include any explanation, markdown, or additional text.
+"""
+        )
+
+        # Chain execution
+        chain_waste_analysis = prompt_template_waste_analysis | gemini | StrOutputParser()
+        response = chain_waste_analysis.invoke({"wasted_items": wasted_items_str})
+
+        try:
+            suggestions = json.loads(response)
+        except json.JSONDecodeError:
+            return jsonify({"error": "Failed to parse JSON from model response", "raw_response": response}), 500
+
+        return jsonify({
+            "suggestions": suggestions,
+            "raw_response": response
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    
+from flask import request, jsonify
+import json
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnableSequence
+
+@app.route('/expiry', methods=['POST'])
+def handle_expiry():
+    try:
+        data = request.get_json()
+
+        if not data or 'expiry_items' not in data:
+            return jsonify({"error": "Missing 'expiry_items' in request"}), 400
+
+        expiry_items = data['expiry_items']
+        expiry_items_str = ", ".join(expiry_items)
+
+        # Updated Prompt Template
+        prompt_template_expiry = PromptTemplate(
+            input_variables=["expiry_items"],
+            template="""
+You are a smart kitchen assistant.
+
+The following items are about to expire: {expiry_items}
+
+For each item, generate:
+- A creative, simple recipe idea using the item.
+- Detailed cooking instructions (around 5–6 lines).
+- Additional ingredients commonly found at home to combine with it.
+- Estimated time to cook (as an integer, in minutes).
+
+Respond strictly in the following JSON format:
+[
+  {{
+    "item": "Bananas",
+    "recipe_name": "Banana Pancakes",
+    "instructions": "Mash 2 ripe bananas in a bowl. Add 2 eggs, a pinch of cinnamon, and mix well. Heat a non-stick pan over medium heat and pour small amounts of batter to form pancakes. Cook each side for 2–3 minutes until golden. Serve with honey or maple syrup.",
+    "additional_ingredients": ["Eggs", "Cinnamon", "Honey"],
+    "time_to_cook": 10
+  }},
+  {{
+    "item": "Bread",
+    "recipe_name": "Garlic Croutons",
+    "instructions": "Cut stale bread into cubes. Toss with olive oil, minced garlic, and a pinch of salt. Spread on a baking sheet and toast at 180°C for 10–12 minutes until golden and crispy, turning halfway. Let cool and store in an airtight container.",
+    "additional_ingredients": ["Olive Oil", "Garlic", "Salt"],
+    "time_to_cook": 15
+  }}
+]
+"""
+        )
+
+        # Invoke Gemini Chain
+        chain_expiry = prompt_template_expiry | gemini | StrOutputParser()
+        raw_response = chain_expiry.invoke({"expiry_items": expiry_items_str})
+
+        # Parse strict JSON
+        recipes_json = json.loads(raw_response)
+
+        return jsonify({
+            "recipes": recipes_json,
+            "raw_response": raw_response
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 
 @app.route('/generate-meal-plan', methods=['POST'])
 def generate_meal_plan():
