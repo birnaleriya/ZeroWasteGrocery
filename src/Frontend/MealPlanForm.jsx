@@ -348,7 +348,7 @@ const downloadPDF = () => {
 
 
     {/* Right - Form */}
-    <div className="w-full md:w-1/2 p-6 rounded-xl shadow-lg bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 border-2 border-amber-300 shadow-[0_0_20px_3px_rgba(251,191,36,0.5)] animate-fadeUp">
+    <div className="w-full md:w-1/2 p-6 rounded-xl  bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 border-2 border-amber-300 shadow-[0_0_20px_3px_rgba(251,191,36,0.5)] animate-fadeUp">
 
   <form
     onSubmit={handleSubmit}

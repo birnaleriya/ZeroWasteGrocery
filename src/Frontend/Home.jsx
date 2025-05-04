@@ -26,8 +26,8 @@ const Home = () => {
     loop={true}
     cursor
     cursorStyle="|"
-    typeSpeed={200}
-    deleteSpeed={100}
+    typeSpeed={150}
+    deleteSpeed={150}
     delaySpeed={2000}
   />
 </motion.h2>
@@ -47,8 +47,8 @@ const Home = () => {
     loop={true}
     cursor
     cursorStyle="|"
-    typeSpeed={100}
-    deleteSpeed={50}
+    typeSpeed={50}
+    deleteSpeed={30}
     delaySpeed={2000}
   />
 </motion.h3>

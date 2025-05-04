@@ -32,7 +32,7 @@ const Navbar = () => {
         <nav className="navbar">
             <div className="navbar-left">
                 <img src={logo} alt="Logo" className="navbar-icon" />
-                <h2>Zero Waste Grocery Planner</h2>
+                <h2 className="pr-7 pl-2 font-pacifico text-3xl "> Grocery Planner</h2>
             </div>
 
             <ul className="nav-links">
@@ -41,7 +41,7 @@ const Navbar = () => {
                 <li><Link to="/smart-grocery">Smart Grocery</Link></li>
                 <li><Link to="/meal-plan">Meal Plan</Link></li>
                 <li><Link to="/zero-waste">Zero Waste</Link></li>
-                <li><Link to="/voice">Voice</Link></li>
+            
             </ul>
 
             <div className="navbar-right" style={{ position: "relative" }}>
