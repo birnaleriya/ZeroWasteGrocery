@@ -1,4 +1,4 @@
-#🛒 Zero Waste Grocery
+🛒 Zero Waste Grocery
 
 A Smart, Sustainable Grocery Shopping and Meal Planning System to Minimize Food Waste
 
