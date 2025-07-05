@@ -23,7 +23,7 @@ Data Visualization through interactive charts
 React + Vite and TailwindCSS	Frontend Interface
 Firebase	Data Storage (Grocery data, reports, etc.)
 
-📊 Visual Insights with D3.js
+📊 Visual Insights
 Interactive charts represent:
 
 ✔️ Grocery consumption patterns
